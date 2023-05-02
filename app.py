@@ -120,18 +120,37 @@ if submitted or update_global_values:
     # create dataframe
     df = pd.DataFrame(operational_costs, index=dates)
 
-    # plot a line for each car
-    chart = (
-        alt.Chart(df.reset_index().round(0))
-        .transform_fold(list(df.columns), as_=["Car", "Cumulative cost"])
-        .mark_line()
-        .encode(x="index:T", y="Cumulative cost:Q", color="Car:N", tooltip=["Car:N", "index:T", "Cumulative cost:Q"])
-        .properties(width=800, height=500)
+    # convert dataframe from wide to long format
+    df_long = df.reset_index().melt(id_vars="index", var_name="Car", value_name="Cumulative cost")
+    df_long = df_long.rename(columns={"index": "Date"}).round(0)
+
+    base = (
+        alt.Chart(df_long).encode(x=alt.X('Date:T', axis=alt.Axis(title='Date')))
+    ).properties(width=800, height=500)
+    columns = sorted(df_long["Car"].unique())
+    selection = alt.selection_single(
+        fields=['Date'], nearest=True, on='mouseover', empty='none', clear='mouseout'
     )
+    lines = base.mark_line().encode(
+        y=alt.Y('Cumulative cost:Q', axis=alt.Axis(title='Cumulative cost')),
+        color=alt.Color('Car:N', legend=alt.Legend(title='Car model')),
+    )
+    points = lines.mark_point().transform_filter(selection)
+
+    rule = base.transform_pivot(
+        'Car', value='Cumulative cost', groupby=['Date']
+    ).mark_rule().encode(
+        opacity=alt.condition(selection, alt.value(0.3), alt.value(0)),
+        tooltip=["Date"] + [alt.Tooltip(c, type='quantitative', format=",") for c in columns]
+    ).add_selection(selection)
+
+    lines + points + rule
+
+
     # add larger line for tooltip
-    tt = chart.mark_line(strokeWidth=30, opacity=0.01)
-    chart + tt
-    # change x and y axis labels
-    chart.encoding.x.title = "Date"
-    chart.encoding.y.title = "Cumulative cost"
-    st.altair_chart(chart)
+    # tt = chart.mark_line(strokeWidth=30, opacity=0.01)
+    # chart + tt
+    # # change x and y axis labels
+    # chart.encoding.x.title = "Date"
+    # chart.encoding.y.title = "Cumulative cost"
+    #st.altair_chart(base)
