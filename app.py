@@ -78,9 +78,9 @@ if submitted or update_global_values:
 
     # Calculate the total cost of ownership per month by car 
     operational_costs = {}
-    for row in operational_cost_per_month.iteritems():
-        total_cost_per_month = row[1] * np.arange(1,121) + meta_df["Price"][row[0]]
-        operational_costs[row[0]] = total_cost_per_month
+    for car, cost in operational_cost_per_month.items():
+        total_cost_per_month = cost * np.arange(1,121) + meta_df["Price"][car]
+        operational_costs[car] = total_cost_per_month
     # create dataframe
     df = pd.DataFrame(operational_costs, index=dates)
 
