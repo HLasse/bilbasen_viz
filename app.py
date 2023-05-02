@@ -24,6 +24,7 @@ with st.sidebar:
             + "to add a car to the comparison. You can add as many cars as you want. "
             + "Shared values for estimated kms driven per year and price of gasoline "
             + "can be set in the 'Shared parameters' section and will be used for all cars."
+            + " Hover over the graph to see a head-by-head comparison of the cars."
         )
 
 # set global inputs
