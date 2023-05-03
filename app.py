@@ -1,6 +1,8 @@
 """Streamlit app to compare the total cost of ownership of multiple cars"""
 
 # Import libraries
+import json
+
 import altair as alt
 import numpy as np
 import pandas as pd
@@ -55,6 +57,28 @@ with st.form(key="add_car_form"):
         # add submit button that saves the sidebar inputs to a pandas dataframe
         submitted = st.form_submit_button("Add car", use_container_width=True)
 
+# create button to download session state dict as json
+if st.session_state["cars"] != {}:
+    json_string = json.dumps(st.session_state["cars"])
+    st.sidebar.download_button(
+        label="Download car data",
+        data=json_string,
+        file_name="car_cost_calculator.json",
+        mime="application/json",
+    )
+# create button to import session state dict from json
+uploaded_file = st.sidebar.file_uploader(
+    "Import car data", type=["json"], key="import_data"
+)
+
+if uploaded_file is not None:
+    try:
+        data = json.load(uploaded_file)
+        st.session_state["cars"].update(data)
+        st.write("Successfully imported data")
+    except Exception as e:
+        st.sidebar.error(f"Invalid file: {e}")
+
 # create form to remove a car
 if st.session_state["cars"] != {}:
     # add toggle to remove cars from the dataframe
@@ -76,11 +100,12 @@ if st.session_state["cars"] != {}:
 # if the update button has been pressed, update the global values
 if submitted or update_global_values:
     # add the parameters from the sidebar to a stateful dictionary
-    st.session_state["cars"][name_of_car] = {
-        "Price": price,
-        "Yearly cost": yearly_cost,
-        "Km per liter": km_per_liter,
-    }
+    if submitted:
+        st.session_state["cars"][name_of_car] = {
+            "Price": price,
+            "Yearly cost": yearly_cost,
+            "Km per liter": km_per_liter,
+        }
 
     meta_df = pd.DataFrame(st.session_state["cars"]).T
     meta_df.index.name = "Car model"
@@ -154,4 +179,7 @@ if submitted or update_global_values:
     # # change x and y axis labels
     # chart.encoding.x.title = "Date"
     # chart.encoding.y.title = "Cumulative cost"
+    #st.altair_chart(base)
+    #st.altair_chart(base)
+    #st.altair_chart(base)
     #st.altair_chart(base)
